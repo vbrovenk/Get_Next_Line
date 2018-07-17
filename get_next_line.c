@@ -11,106 +11,184 @@
 /* ************************************************************************** */
 
 #include "get_next_line.h"
+#include <stdio.h>
+#include <string.h>
 
-static t_gnl	*find_fd(int fd, t_gnl **head)
+// static t_list            *get_correct_file(t_list **file, int fd)
+// {
+//     t_list                *tmp;
+
+//     tmp = *file;
+//     while (tmp)
+//     {
+//         if ((int)tmp->content_size == fd)
+//             return (tmp);
+//         tmp = tmp->next;
+//     }
+//     tmp = ft_lstnew("\0", fd);
+//     ft_lstadd(file, tmp);
+//     tmp = *file;
+//     return (tmp);
+// }
+
+// int                        get_next_line(const int fd, char **line)
+// {
+//     char                buf[BUFF_SIZE + 1];
+//     static t_list        *file;
+//     int                    i;
+//     int                    ret;
+//     t_list                *curr;
+
+//     if ((fd < 0 || line == NULL || read(fd, buf, 0) < 0))
+//         return (-1);
+//     curr = get_correct_file(&file, fd);
+//     MALLCHECK((*line = ft_strnew(1)));
+//     while ((ret = read(fd, buf, BUFF_SIZE)))
+//     {
+//         buf[ret] = '\0';
+//         MALLCHECK((curr->content = ft_strjoin(curr->content, buf)));
+//         if (ft_strchr(buf, '\n'))
+//             break ;
+//     }
+//     if (ret < BUFF_SIZE && !ft_strlen(curr->content))
+//         return (0);
+//     i = ft_copyuntil(line, curr->content, '\n');
+//     (i < (int)ft_strlen(curr->content))
+//         ? curr->content += (i + 1)
+//         : ft_strclr(curr->content);
+//     return (1);
+// }
+
+
+// void	join(char **line, char *temp_str)
+// {
+// 	char	*temp_for_join;
+
+// 	temp_for_join = *line;
+// 	if (temp_for_join != NULL)
+// 	{
+// 		*line = ft_strjoin(temp_for_join, temp_str);
+// 		free(temp_for_join);
+// 		free(temp_str);
+// 	}
+// 	else
+// 		*line = temp_str;
+// }
+
+// void	get_substr(t_gnl *array, char **line, char *str_end)
+// {
+// 	int		size_line;
+// 	int		size_end;
+// 	char	*temp_str;
+
+// 	size_line = ft_strlen(array->str);
+// 	size_end = ft_strlen(str_end);
+// 	if (str_end != NULL)
+// 	{
+// 		temp_str = ft_strsub(array->str, 0, size_line - size_end);
+// 		array->size = size_end - 1;
+// 		ft_memmove(array->str, str_end + 1, size_end);
+// 	}
+// 	else
+// 	{
+// 		array->size = 0;
+// 		temp_str = ft_strdup(array->str);
+// 	}
+// 	join(line, temp_str);
+// }
+
+// int		get_next_line(const int fd, char **line)
+// {
+// 	char			*str_end;
+// 	static t_gnl	array[4500];
+
+// 	if (read(fd, NULL, 0) < 0 || !line ||
+// 		(!(*line = 0) && (fd < 0 || fd > 4499)))
+// 		return (-1);
+// 	str_end = 0;
+// 	while (str_end == 0)
+// 	{
+// 		if (array[fd].size == 0 &&
+// 			(array[fd].size = read(fd, array[fd].str, BUFF_SIZE)) < 1)
+// 		{
+// 			if (*line != NULL)
+// 				return (1);
+// 			else
+// 				return (0);
+// 		}
+// 		array[fd].str[array[fd].size] = '\0';
+// 		str_end = ft_memchr(array[fd].str, '\n', array[fd].size);
+// 		get_substr(&array[fd], line, str_end);
+// 	}
+// 	return (1);
+// }
+
+
+int 	ft_copyuntil(char **line, char *content, char c)
 {
-	t_gnl *elem;
+	int i;
+	char *temp;
 
-	elem = *head;
-	while (elem && elem->fd != fd)
-		elem = elem->next;
-	return (elem);
-}
+	i = 0;
+	temp = malloc(sizeof(char) * (ft_strlen(content) + 1));
 
-static int		find_line(char *buff, t_gnl **head, int fd)
-{
-	t_gnl	*elem;
-	char	*temp;
-
-	elem = find_fd(fd, head);
-	if (elem == NULL)
+	while (content[i] != '\0' && content[i] != c)
 	{
-		if (!(elem = (t_gnl *)ft_lstnew((void *)buff, ft_strlen(buff) + 1)))
-			return (-1);
-		elem->fd = fd;
-		ft_lstadd_back((t_list **)head, (t_list *)elem);
+		temp[i] = content[i];
+		i++;
 	}
-	else
+	temp[i] = '\0';
+	*line = temp;
+
+	return (i);
+}
+
+t_list	*search_fd(t_list **gnl, int fd)
+{
+	t_list *temp;
+
+	temp = *gnl;
+	while (temp != NULL)
 	{
-		if (!(temp = ft_strjoin((char *)elem->str, buff)))
-			return (-1);
-		free(elem->str);
-		elem->str = temp;
-		elem->str_size = ft_strlen(temp) + 1;
+		if ((int)temp->content_size == fd)
+			return (temp);
+		temp = temp->next;
 	}
-	if (ft_strchr(elem->str, '\n') != NULL)
-		return (1);
-	return (0);
+	temp = ft_lstnew("\0", fd);
+	ft_lstadd(gnl, temp);
+	temp = *gnl;
+	return (temp);
 }
 
-static char		*get_str(t_gnl **head, int fd)
+int		get_next_line(const int fd, char **line)
 {
-	char	*start;
-	t_gnl	*elem;
+	static t_list *gnl;
+	char	buffer[BUFF_SIZE + 1];
+	int ret;
+	t_list *list_current;
+	size_t i;
+	char *temp;
 
-	elem = find_fd(fd, head);
-	if (!(start = ft_strdup((char *)elem->str)))
-		return (NULL);
-	free(elem->str);
-	elem->str = NULL;
-	elem->str_size = 0;
-	return (start);
-}
-
-static char		*get_substr(t_gnl **head, int fd)
-{
-	char	*start;
-	char	*end;
-	t_gnl	*elem;
-	char	*temp;
-
-	elem = find_fd(fd, head);
-	if (elem == NULL)
-		return (NULL);
-	if ((end = ft_strchr(elem->str, '\n')) != NULL)
-	{
-		if (!(start = ft_strsub((char *)elem->str, 0,
-			elem->str_size - ft_strlen(++end) - 2)))
-			return (NULL);
-		temp = elem->str;
-		if (ft_strlen(end) == 0)
-			elem->str = NULL;
-		else
-			elem->str = (void *)ft_strdup(end);
-		elem->str_size = ft_strlen(end) + 1;
-		free(temp);
-	}
-	else
-		start = get_str(head, fd);
-	return (start);
-}
-
-int				get_next_line(const int fd, char **line)
-{
-	char			buff[BUFF_SIZE + 1];
-	static t_gnl	*head;
-	int				ret;
-	int				find;
-
-	if (fd < 0 || read(fd, buff, 0) < 0)
+	if (fd < 0 || line == NULL || read(fd, buffer, 0) < 0)
 		return (-1);
-	while ((ret = read(fd, buff, BUFF_SIZE)) != 0)
+
+	list_current = search_fd(&gnl, fd);
+	while ((ret = read(fd, buffer, BUFF_SIZE)))
 	{
-		buff[ret] = '\0';
-		if ((find = find_line(buff, &head, fd)) == 1)
-		{
-			*line = get_substr(&head, fd);
-			return (1);
-		}
-		if (find == -1)
-			return (-1);
+		buffer[ret] = '\0';
+		temp = list_current->content;
+		list_current->content = ft_strjoin(temp, buffer);
+		free(temp);
+		if (ft_strchr(buffer, '\n'))
+			break ;
 	}
-	if ((*line = get_substr(&head, fd)) != NULL)
-		return (1);
-	return (0);
+	if (ret < BUFF_SIZE && !ft_strlen(list_current->content))
+		return (0);
+	
+	i = ft_copyuntil(line, list_current->content, '\n');
+	(i < ft_strlen(list_current->content))
+		? list_current->content += (i + 1)
+		: ft_strclr(list_current->content);
+
+	return (1);
 }

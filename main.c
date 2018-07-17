@@ -1,25 +1,45 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ft_strlen.c                                        :+:      :+:    :+:   */
+/*   main.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: vbrovenk <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2018/03/21 13:30:42 by vbrovenk          #+#    #+#             */
-/*   Updated: 2018/03/21 13:30:45 by vbrovenk         ###   ########.fr       */
+/*   Created: 2018/07/14 13:17:17 by vbrovenk          #+#    #+#             */
+/*   Updated: 2018/07/14 13:17:19 by vbrovenk         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "libft.h"
+#include "get_next_line.h"
+#include <fcntl.h>
+#include <stdio.h>
 
-size_t	ft_strlen(const char *s)
+int main(int argc, char **argv)
 {
-	size_t i;
+	char *line;
 
-	i = 0;
-	if (s == NULL)
-		return (0);
-	while (s[i])
+	int ret;
+	int fd;
+
+	fd = open("input.txt", O_RDONLY);
+	// printf("fd = %d\n", fd);
+
+	int i = 0;
+	while (i < 1)
+	{
+		ret = get_next_line(fd, &line);
+		printf("line = %s | ret = %d\n", line, ret);
+		// free(line);
 		i++;
-	return (i);
+	} 
+
+	while (1)
+		;
+
+
+	// printf("%s 	| return %d\n", line, ret);
+
+
+	
+	return (0);
 }
