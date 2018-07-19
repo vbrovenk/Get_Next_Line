@@ -25,18 +25,25 @@ int main(int argc, char **argv)
 	// printf("fd = %d\n", fd);
 
 	int i = 0;
-	while (i < 1)
+	// while (i < 1)
+	// {
+	// 	ret = get_next_line(fd, &line);
+	// 	printf("line = %s | ret = %d\n", line, ret);
+	// 	// free(line);
+	// 	i++;
+	// } 
+
+	while ((ret = get_next_line(fd, &line)) > 0)
 	{
-		ret = get_next_line(fd, &line);
-		printf("line = %s | ret = %d\n", line, ret);
-		// free(line);
-		i++;
-	} 
-
-	while (1)
-		;
-
-
+		printf("%s\n", line);
+		free(line);
+	}
+	// ret = get_next_line(fd, &line);
+	// free(line);
+	// ret = get_next_line(fd, &line);
+	// free(line);
+	system("leaks a.out");
+	
 	// printf("%s 	| return %d\n", line, ret);
 
 
