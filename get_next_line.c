@@ -12,82 +12,69 @@
 
 #include "get_next_line.h"
 
-int		ft_copyuntil(char **line, char *content, char c)
+void	save_after_new(t_gnl *gnl, char *end_str)
 {
-	int		i;
-	char	*temp;
+	char *dup_end;
 
-	i = 0;
-	temp = malloc(sizeof(char) * (ft_strlen(content) + 1));
-	while (content[i] != '\0' && content[i] != c)
-	{
-		temp[i] = content[i];
-		i++;
-	}
-	temp[i] = '\0';
-	*line = temp;
-	return (i);
+	gnl->length = ft_strlen(end_str) - 1;
+	end_str += 1;
+	dup_end = ft_strdup(end_str);
+	ft_bzero(gnl->string, ft_strlen(gnl->string));
+	ft_strcpy(gnl->string, dup_end);
+	free(dup_end);
 }
 
-t_list	*search_fd(t_list **gnl, int fd)
+void	help_func(t_gnl *gnl, char **line, char *end_str)
 {
-	t_list	*temp;
-	char	*str;
+	char *temp;
+	char *last_line;
 
-	temp = *gnl;
-	while (temp != NULL)
+	if (end_str != NULL)
 	{
-		if ((int)temp->content_size == fd)
-		{
-			str = ft_strdup(temp->content);
-			ft_strdel(&temp->temp_content);
-			temp->content = str;
-			return (temp);
-		}
-		temp = temp->next;
-	}
-	temp = ft_lstnew("\0", fd);
-	ft_lstadd(gnl, temp);
-	temp = *gnl;
-	return (temp);
-}
-
-void	help_func(t_list *list_current, char **line)
-{
-	size_t i;
-
-	i = ft_copyuntil(line, list_current->content, '\n');
-	if (i < ft_strlen(list_current->content))
-	{
-		list_current->temp_content = list_current->content;
-		list_current->content += (i + 1);
+		temp = ft_strsub(gnl->string, 0,
+		ft_strlen(gnl->string) - ft_strlen(end_str));
+		save_after_new(gnl, end_str);
 	}
 	else
-		ft_strclr(list_current->content);
+	{
+		temp = ft_strdup(gnl->string);
+		gnl->length = 0;
+	}
+	last_line = *line;
+	if (*line != NULL)
+	{
+		*line = ft_strjoin(last_line, temp);
+		free(temp);
+		free(last_line);
+	}
+	else
+		*line = temp;
 }
 
 int		get_next_line(const int fd, char **line)
 {
-	static t_list	*gnl;
-	char			buffer[BUFF_SIZE + 1];
-	int				ret;
-	t_list			*list_current;
-	char			*temp;
+	static	t_gnl	gnl[4000];
+	char			*end_str;
 
-	if (fd < 0 || line == NULL || read(fd, buffer, 0) < 0)
+	if (read(fd, 0, 0) < 0 || line == NULL)
 		return (-1);
-	list_current = search_fd(&gnl, fd);
-	while ((ret = read(fd, buffer, BUFF_SIZE)))
+	*line = 0;
+	end_str = 0;
+	while (end_str == 0)
 	{
-		buffer[ret] = '\0';
-		temp = list_current->content;
-		list_current->content = ft_strjoin(list_current->content, buffer);
-		ft_strdel(&temp);
-		if (ft_strchr(buffer, '\n'))
-			break ;
+		if (gnl[fd].length == 0)
+		{
+			if ((gnl[fd].length = read(fd, gnl[fd].string, BUFF_SIZE)) < 1)
+			{
+				if (*line != NULL)
+					return (1);
+				else
+					return (0);
+			}
+		}
+		gnl[fd].string[gnl[fd].length] = '\0';
+		end_str = ft_strchr(gnl[fd].string, '\n');
+		help_func(&gnl[fd], line, end_str);
 	}
-	if (ret < BUFF_SIZE && !ft_strlen(list_current->content))
-		return (0);
-	help_func(list_current, line);
 	return (1);
 }

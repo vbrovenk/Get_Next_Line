@@ -22,6 +22,9 @@ int main(int argc, char **argv)
 	int fd;
 
 	fd = open("input.txt", O_RDONLY);
+
+	// fd = open(argv[1], O_RDONLY);
+
 	// printf("fd = %d\n", fd);
 
 	int i = 0;
@@ -33,16 +36,21 @@ int main(int argc, char **argv)
 	// 	i++;
 	// } 
 
-	while ((ret = get_next_line(fd, &line)) > 0)
-	{
-		printf("%s\n", line);
-		free(line);
-	}
-	// ret = get_next_line(fd, &line);
+	// while ((ret = get_next_line(fd, &line)) > 0)
+	// {
+	// 	printf("%s\n", line);
+	// 	free(line);
+	// }
+
+	ret = get_next_line(fd, &line);
 	// free(line);
-	// ret = get_next_line(fd, &line);
+	printf("line = %s\n", line);
+
+
+	ret = get_next_line(fd, &line);
 	// free(line);
-	system("leaks a.out");
+	printf("line = %s\n", line);
+	// system("leaks a.out");
 	
 	// printf("%s 	| return %d\n", line, ret);
 
